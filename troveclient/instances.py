@@ -56,7 +56,7 @@ class Instances(base.ManagerWithFind):
     resource_class = Instance
 
     def create(self, name, flavor_id, volume=None, databases=None, users=None,
-               restorePoint=None):
+               restorePoint=None, configuration_ref=None):
         """
         Create (boot) a new instance.
         """
@@ -72,8 +72,22 @@ class Instances(base.ManagerWithFind):
             body["instance"]["users"] = users
         if restorePoint:
             body["instance"]["restorePoint"] = restorePoint
+        if configuration_ref:
+            body["instance"]["configurationRef"] = configuration_ref
 
         return self._create("/instances", body, "instance")
+
+    def modify(self, instance_id, configuration_ref=None):
+        # TODO(pdmars): make sure empty instance body doesn't do anything
+        body = {
+            "instance": {
+            }
+        }
+        if configuration_ref is not None:
+            body["instance"]["configurationRef"] = configuration_ref
+        url = "/instances/%s" % instance_id
+        resp, body = self.api.client.put(url, body=body)
+        check_for_exceptions(resp, body)
 
     def _list(self, url, response_key, limit=None, marker=None):
         resp, body = self.api.client.get(limit_url(url, limit, marker))
